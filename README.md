@@ -1,73 +1,107 @@
-# C3 — Cloud Deployment: Projekt-Grundstruktur
+# C3 — Cloud Platform Deployment
 
-Kurzprojekt-Skeleton für eine kleine Web-Anwendung (Backend) mit persistenter Datenablage, Docker- und Deploy-Vorlagen.
+Diese Anwendung ist ein kleines FastAPI-Backend mit CRUD-Funktionalität für Items. Sie wurde so vorbereitet, dass sie lokal per Docker läuft und auf Fly.io als öffentliche URL betrieben werden kann.
 
-Ziel: eine Anwendung, die später auf einer Free-Tier-Plattform (z. B. Fly.io oder Render) betrieben werden kann — ohne kostenpflichtige Ressourcen.
+## Was umgesetzt wurde
 
-Inhalt dieser Vorlage:
-- `app/` — FastAPI-Beispiel (CRUD für `items`)
-- `Dockerfile` — Container-Build
-- `docker-compose.yml` — lokale Entwicklung mit persistentem Volume (`data`)
-- `.env.example` — Environment-Variablen-Vorlage
-- `.github/workflows/deploy.yml` — CI-Template (Platzhalter für Deploy-Token)
+- FastAPI-Backend mit Root-Endpoint und CRUD für Items in [app/main.py](app/main.py)
+- Persistente Speicherung über SQLAlchemy und SQLite in einem Volume in [app/database.py](app/database.py)
+- Docker-Setup für lokale Entwicklung in [Dockerfile](Dockerfile) und [docker-compose.yml](docker-compose.yml)
+- Deployment-Konfiguration für Fly.io in [fly.toml](fly.toml)
+- Automatisches Deployment per GitHub Actions in [.github/workflows/deploy.yml](.github/workflows/deploy.yml)
+- Beispiel für benötigte Umgebungsvariablen in [.env.example](.env.example)
+- Strukturierte JSON-Logs über Stdout in [app/main.py](app/main.py)
 
-Nächste Schritte:
-1. Lokales Ausprobieren: `docker compose up --build` (sehen, dass `http://localhost:8080/docs` erreichbar ist)
-2. Account bei einer Free-Tier-Plattform erstellen (z. B. Fly.io oder Render). Kostenfrei nutzbare Optionen wählen.
-3. Secrets (z. B. `DATABASE_URL`, Deploy-Token) in der Plattform setzen. CI-Workflow oder Platform-Auto-Deploy konfigurieren.
+## Plattform-Wahl
 
-Weiterführende Dateien:
-- [Dockerfile](Dockerfile)
-- [.env.example](.env.example)
-- [docker-compose.yml](docker-compose.yml)
-- [app/main.py](app/main.py)
+Ich habe Fly.io gewählt, weil die Plattform für dieses Projekt einen klaren Weg von Git-Repository zu öffentlich erreichbarer URL bietet. Für den Auftrag ist wichtig, dass das Deployment reproduzierbar ist, Persistenz möglich ist und Deployments automatisiert ausgelöst werden können. Genau das deckt Fly.io mit Docker-Deploys, Volumes, Secrets und GitHub-Actions-Anbindung ab.
 
-Begründung: Für die Vorstudie und das kostenfreie Deployment empfehle ich Fly.io (Free-Tier, einfache CLI-Integration, Volumes für Persistenz). Alternativ ist Render für einfache Web-Services möglich.
+## Architektur
 
-Deploy-Anleitung (Fly.io)
-1) Voraussetzungen
-	- Fly.io Account (kostenfrei tier möglich)
-	- `flyctl` installiert: `curl -L https://fly.io/install.sh | sh`
+```mermaid
+flowchart LR
+    user([Browser]) -->|HTTPS| fly[Fly.io Public URL]
+    fly --> app[FastAPI App in Docker]
+    app --> db[(SQLite auf Fly Volume)]
+    app --> logs[(Stdout / Fly Logs)]
+    repo[GitHub Repository] --> workflow[GitHub Actions]
+    workflow --> fly
+```
 
-2) Lokales Testen
-	```bash
-	docker compose up --build
-	# Open http://localhost:8080/docs
-	```
+## Relevante Konfiguration
 
-3) Erste Bereitstellung mit Fly
-	```bash
-	# melde dich an
-	flyctl auth signup  # oder login
-	cd /path/to/repo
-	flyctl launch --no-deploy --name my-c3-app
-	# Fly erzeugt fly.toml; anpassen falls nötig
-	# Erstelle ein Volume für persistente Daten (optional, empfohlen)
-	flyctl volumes create data --size 1 --region ord
-	# Setze env vars
-	flyctl secrets set DATABASE_URL="sqlite:///data/data.db"
-	# Deploy
-	flyctl deploy
-	```
+### Umgebungsvariablen
 
-Hinweis: Fly kann SQLite in einem Volume verwenden; für produktive Szenarien ist eine Managed Postgres empfehlenswert (Fly bietet "postgresql" als Add-on).
+Die Anwendung liest die Datenbank-URL aus `DATABASE_URL`. Lokal wird SQLite verwendet, auf Fly.io zeigt die URL auf das gemountete Volume.
 
-CI / Auto-Deploy (GitHub Actions)
- - Setze `FLY_API_TOKEN` als GitHub Secret.
- - Beispiel-Workflow (ausgefüllter Job) könnte `flyctl deploy` auf `push` auslösen.
+Beispiel aus [.env.example](.env.example):
 
-Secrets und Reproduzierbarkeit
- - Alle Secrets werden in der Plattform gesetzt (keine Hardcodierten Secrets im Repo).
- - In `.env.example` sind die benötigten Variablen beschreiben. Nutze `DATABASE_URL` zur Konfiguration.
+```env
+DATABASE_URL=sqlite:///./data/data.db
+LOG_LEVEL=info
+APP_NAME=C3-Template-App
+```
 
-Persistenz
- - Lokale Entwicklung: `docker-compose` nutzt ein named volume `data` (Ordner `/app/data`).
- - Fly.io: Volume `data` ermöglicht Persistenz über Deploys.
+### Fly.io-Konfiguration
 
-Logging
- - Die Anwendung schreibt strukturierte JSON-ähnliche Antworten und Uvicorn/Stdout-Logs werden von Fly/Platform erfasst.
+Die Datei [fly.toml](fly.toml) beschreibt die App, den internen Port, das Volume und die Datenbank-URL. Das Volume sorgt dafür, dass die SQLite-Datei einen Redeploy übersteht.
 
-Was als Nächstes
- - Optional: GitHub Actions Workflow zum Auto-Deploy ergänzen (benötigt `FLY_API_TOKEN`).
- - Optional: Managed DB (Postgres) konfigurieren, `DATABASE_URL` anpassen.
+### Deployment-Workflow
+
+Der Workflow in [.github/workflows/deploy.yml](.github/workflows/deploy.yml) führt bei jedem Push auf `main` automatisch `flyctl deploy --remote-only` aus. Dafür wird nur der Secret `FLY_API_TOKEN` benötigt.
+
+## Setup-Anleitung
+
+### Voraussetzungen
+
+- GitHub-Repository mit dem Code
+- Fly.io-Account
+- Fly-CLI (`flyctl`)
+- GitHub Secret `FLY_API_TOKEN`
+
+### Lokal starten
+
+```bash
+docker compose up --build
+```
+
+Danach ist die API unter `http://localhost:8080` erreichbar, die Swagger-Oberfläche unter `http://localhost:8080/docs`.
+
+### Fly.io einrichten
+
+```bash
+flyctl auth login
+flyctl launch --no-deploy
+flyctl volumes create data --size 1 --region fra
+flyctl secrets set DATABASE_URL="sqlite:////app/data/data.db"
+flyctl deploy
+```
+
+### Automatisches Deployment
+
+Nach dem ersten manuellen Setup reicht künftig ein Push auf `main`, damit GitHub Actions das neue Image auf Fly deployt.
+
+## Begründung der wichtigsten Entscheidungen
+
+- Fly.io statt nur Docker Compose, weil eine öffentliche URL, TLS, Volumes und Auto-Deploy in einer schlanken Konfiguration abgedeckt werden.
+- SQLite statt externer Datenbank, weil die Persistenz über ein Fly-Volume für diese kleine Anwendung ausreichend ist und keine zusätzlichen Managed-DB-Kosten entstehen.
+- GitHub Actions statt reiner Plattform-UI, weil das Deployment damit reproduzierbar und dokumentierbar ist.
+
+## Logging
+
+Die App schreibt strukturierte JSON-Logs in Stdout. Das ist für Fly.io direkt im Logging-Interface sichtbar und enthält unter anderem Methode, Pfad, Statuscode und Dauer eines Requests.
+
+## Learnings
+
+- Das eigentliche Deployment muss im Repository als Code sichtbar sein, nicht nur in einer Plattform-UI konfiguriert.
+- Persistenz ist bei SQLite nur dann sinnvoll, wenn der Speicher sauber als Volume gemountet wird.
+- Ein Auto-Deploy-Workflow ist für die Reproduzierbarkeit deutlich besser als ein manueller Klickpfad.
+
+## KI-Nutzung
+
+Bei der Erstellung dieser Dokumentation und der Deployment-Vorlage wurden KI-Tools verwendet. Die erzeugten Teile wurden auf das Projekt angepasst und im Code sowie in der Konfiguration nachvollziehbar gemacht.
+
+## Öffentliche URL
+
+Nach dem Deployment wird die öffentliche URL hier eingetragen, zum Beispiel `https://<app-name>.fly.dev`.
 
