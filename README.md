@@ -25,7 +25,7 @@ Diese Anwendung ist ein kleines FastAPI-Backend mit CRUD-Funktionalität für It
 
 Ich habe Render gewählt, weil die Plattform den Weg vom Repository zur öffentlichen Anwendung mit wenig Reibung abbildet: GitHub-Repository verbinden, Blueprint aktivieren, Secrets als Environment-Variablen setzen und dann per Git-Push automatisch deployen. Für diesen Auftrag ist das praktisch, weil die gesamte Konfiguration im Repository nachvollziehbar bleibt und nicht nur in einer Plattform-UI existiert.
 
-Fly.io wurde im Verlauf verworfen, weil der Workflow hier durch Account- bzw. Billing-Einschränkungen blockiert war. Render war für die Abgabe robuster, weil sich die Anwendung dort mit einem stabilen Free-Tier und klarer Blueprint-Konfiguration betreiben ließ.
+Fly.io wurde im Verlauf verworfen, weil der Workflow hier durch Account- bzw. Billing-Einschränkungen blockiert war. Render war für die Abgabe robuster, weil sich die Anwendung dort mit einem stabilen Free-Tier und klarer Blueprint-Konfiguration betreiben liess.
 
 ## Architektur
 
@@ -162,17 +162,16 @@ Beispiele für geloggte Ereignisse:
 - Ältere, stabile Versionen können in Managed-Plattformen zuverlässiger sein als die neuesten Releases.
 - Persistenz muss bewusst außerhalb des Containers gelöst werden.
 - Strukturiertes Logging macht Deployment-Fehler deutlich schneller nachvollziehbar.
+- Das war für mich das erste Mal, dass ich so etwas umgesetzt habe.
+- Ich habe vorher noch nie mit Render gearbeitet und auch noch nie mit Neon.
+- Alles in diesem Setup war neu für mich.
+- Es hat an ein paar Stellen erst nicht funktioniert, bis ich den Fehler gefunden und behoben habe.
 
 Wenn ich den Auftrag rückblickend noch einmal starten würde, würde ich die Python-Version und die Paketkompatibilität früher festnageln und den Deployment-Blueprint von Anfang an als Teil der Projektstruktur behandeln.
 
 ## KI-Nutzung
 
 Bei der Erstellung und Überarbeitung dieser Dokumentation sowie bei der Iteration der Deployment-Konfiguration wurden KI-Tools verwendet. Die Vorschläge wurden geprüft, an das Projekt angepasst und durch lokale Tests sowie erfolgreiche Deployments validiert.
-
-## Screencast / Live-Demo
-
-- Live-URL der Anwendung: https://c3-template-app.onrender.com
-- Screencast-Link: wird separat eingereicht bzw. hier ergänzt
 
 ## Repository-Struktur
 
