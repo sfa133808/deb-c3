@@ -40,6 +40,8 @@ flowchart LR
 
 ## Relevante Konfiguration
 
+Test
+
 ### Umgebungsvariablen
 
 Die Anwendung liest ihre Konfiguration über Environment-Variablen. Im Repository liegt dafür eine [.env.example](.env.example) als Vorlage.
