@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session
 from . import models, crud, schemas
 from .database import engine, get_db
 
-# Screencast Demo: This change triggers a new Render deployment
+# Screencast Demo: This change triggers a new Render deployment NEW
+# Test
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="C3-Template-App")
@@ -62,6 +63,7 @@ def on_startup():
 
 @app.get("/", tags=["root"])
 def read_root():
+    # Screencast deployment test version 2
     logger.info("root_requested")
     return {"status": "ok", "service": "C3-Template-App"}
 
