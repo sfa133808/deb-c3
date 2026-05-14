@@ -70,6 +70,7 @@ def read_root():
 
 @app.post("/items/", response_model=schemas.Item)
 def create_item(item: schemas.ItemCreate, db: Session = Depends(get_db)):
+    # For screencast demonstration
     created_item = crud.create_item(db, item)
     logger.info("item_created", extra={"item_id": created_item.id})
     return created_item
