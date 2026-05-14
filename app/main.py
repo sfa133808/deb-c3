@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from . import models, crud, schemas
 from .database import engine, get_db
 
+# Screencast Demo: This change triggers a new Render deployment
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="C3-Template-App")
